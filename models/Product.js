@@ -21,5 +21,7 @@ const productSchema = mongoose.Schema({
   numReviews: { type: Number, required: true, default: 0 },
 }, { timestamps: true });
 
-const Product = mongoose.model('Product', productSchema);
+// LA SOLUCIÓN: Forzamos a Mongoose a usar la colección 'perfumes'
+const Product = mongoose.model('Product', productSchema, 'perfumes');
+
 export default Product;
