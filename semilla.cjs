@@ -509,7 +509,7 @@ const todosLosPerfumes = [...lote1, ...lote2, ...lote3];
 // ==========================================
 
 // Tu URL de la nube
-const url = 'mongodb+srv://admin:Nohay123.@cluster0.57ucp7o.mongodb.net/?appName=Cluster0';
+const url = 'mongodb+srv://admin:Nohay123.@cluster0.57ucp7o.mongodb.net/catalogo_perfumes?retryWrites=true&w=majority';
 const dbName = 'catalogo_perfumes';
 const client = new MongoClient(url); // Usa el MongoClient de la línea 1
 
