@@ -71,7 +71,29 @@ const createProduct = async (req, res) => {
     const createdProduct = await product.save();
     res.status(201).json(createdProduct);
 };
+// --- FUNCIÓN DE SEMILLA (Copia y pega esto en productController.js) ---
 
+const seedProducts = async (req, res) => {
+    try {
+        // 1. Limpiamos la casa (borrar antiguos)
+        await Product.deleteMany({});
+
+        // 2. Definimos los datos
+        // 👇👇👇 AQUÍ ES DONDE VAS A PEGAR TUS DATOS 👇👇👇
+        const perfumes = [ 
+           
+        ]; 
+        // 👆👆👆 PEGA DENTRO DE ESTOS CORCHETES 👆👆👆
+
+        // 3. Insertamos
+        const createdProducts = await Product.insertMany(perfumes);
+        res.json({ message: "¡Carga exitosa!", count: createdProducts.length });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Error cargando datos" });
+    }
+};
 // ¡No olvides agregarlo al export!
 export { getProducts, getProductById, createProductReview, createProduct };
 
