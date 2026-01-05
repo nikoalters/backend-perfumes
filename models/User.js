@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = mongoose.Schema({
+    // --- DATOS PERSONALES ---
     name: {
         type: String,
         required: true,
@@ -15,21 +16,36 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    
+    // --- PERMISOS ---
     isAdmin: {
         type: Boolean,
         required: true,
         default: false,
     },
+
+    // --- NUEVO: LISTA DE DESEOS ---
+    wishlist: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product' // Relacionamos con el modelo de Productos
+        }
+    ]
+
 }, {
-    timestamps: true,
+    timestamps: true, // Crea automáticamente createdAt y updatedAt
 });
 
-// MÉTODO 1: Comparar contraseñas (para el Login)
+// ============================================================
+// MÉTODOS DEL MODELO
+// ============================================================
+
+// 1. Comparar contraseñas (Usado en el Login)
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// MÉTODO 2: Encriptar contraseña antes de guardar (para el Registro)
+// 2. Encriptar contraseña antes de guardar (Usado en Registro/Cambio de clave)
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();

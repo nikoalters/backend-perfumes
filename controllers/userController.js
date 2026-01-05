@@ -49,7 +49,7 @@ const registerUser = async (req, res) => {
     }
 };
 
-// 3. PERFIL DE USUARIO (Esta es la que faltaba)
+// 3. PERFIL DE USUARIO
 const getUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
@@ -65,5 +65,54 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-// IMPORTANTE: Exportar las 3 funciones
-export { authUser, registerUser, getUserProfile };
+// ============================================================
+// LÓGICA DE WISHLIST (NUEVAS FUNCIONES)
+// ============================================================
+
+// 4. AGREGAR O QUITAR DE FAVORITOS
+const toggleWishlist = async (req, res) => {
+    const { productId } = req.body;
+    
+    // Buscamos al usuario actual
+    const user = await User.findById(req.user._id);
+  
+    if (user) {
+      // Verificamos si el perfume YA está en su lista
+      const isAdded = user.wishlist.includes(productId);
+  
+      if (isAdded) {
+        // Si existe -> Lo sacamos (pull)
+        user.wishlist.pull(productId);
+        await user.save();
+        res.json({ message: "Producto eliminado de favoritos", wishlist: user.wishlist });
+      } else {
+        // Si NO existe -> Lo agregamos (push)
+        user.wishlist.push(productId);
+        await user.save();
+        res.json({ message: "Producto agregado a favoritos", wishlist: user.wishlist });
+      }
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+};
+  
+// 5. OBTENER LA LISTA DE FAVORITOS
+const getWishlist = async (req, res) => {
+    // .populate('wishlist') rellena los datos del perfume automáticamente
+    const user = await User.findById(req.user._id).populate('wishlist');
+  
+    if (user) {
+        res.json(user.wishlist);
+    } else {
+        res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+};
+
+// IMPORTANTE: Exportar TODAS las funciones
+export { 
+    authUser, 
+    registerUser, 
+    getUserProfile,
+    toggleWishlist, // Nueva
+    getWishlist     // Nueva
+};
