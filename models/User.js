@@ -47,11 +47,16 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // 2. Encriptar contraseña antes de guardar (Usado en Registro/Cambio de clave)
 userSchema.pre('save', async function (next) {
+    // CORRECCIÓN IMPORTANTE: 
+    // Si la contraseña NO se modificó, usamos 'return next()' para salir de la función.
+    // Esto evita que intente encriptar de nuevo y cause el error cuando guardamos la wishlist.
     if (!this.isModified('password')) {
-        next();
+        return next(); 
     }
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    next();
 });
 
 const User = mongoose.model('User', userSchema);
