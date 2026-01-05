@@ -45,18 +45,22 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// 2. Encriptar contraseña antes de guardar (Usado en Registro/Cambio de clave)
-userSchema.pre('save', async function (next) {
-    // CORRECCIÓN IMPORTANTE: 
-    // Si la contraseña NO se modificó, usamos 'return next()' para salir de la función.
-    // Esto evita que intente encriptar de nuevo y cause el error cuando guardamos la wishlist.
+// 2. Encriptar contraseña antes de guardar (VERSIÓN CORREGIDA SIN 'next')
+// Al usar async/await, Mongoose moderno ya no necesita que llamemos a 'next()'.
+// Simplemente dejamos que la función termine o usamos return.
+userSchema.pre('save', async function () { 
+    
+    // Si la contraseña NO se modificó (ej: solo estamos guardando un like),
+    // salimos de la función inmediatamente con un return simple.
     if (!this.isModified('password')) {
-        return next(); 
+        return; 
     }
 
+    // Si la contraseña cambió, la encriptamos.
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
+    
+    // Fin de la función (Mongoose asume que todo salió bien)
 });
 
 const User = mongoose.model('User', userSchema);
