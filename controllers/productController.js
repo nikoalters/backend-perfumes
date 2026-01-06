@@ -127,7 +127,7 @@ const updateProduct = async (req, res) => {
         // Campos opcionales (si tu modelo los usa)
         product.descripcion = descripcion || product.descripcion;
         product.marca = marca || product.marca;
-        product.countInStock = countInStock || product.countInStock;
+        product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
 
         const updatedProduct = await product.save();
         res.json(updatedProduct);
