@@ -115,8 +115,10 @@ const createProduct = async (req, res) => {
 // @desc    Actualizar un producto
 // @route   PUT /api/products/:id
 // @access  Private/Admin
+// @desc    Actualizar un producto
+// @route   PUT /api/products/:id
+// @access  Private/Admin
 const updateProduct = async (req, res) => {
-    // 1. Recibimos los datos del frontend
     const { nombre, precio, descripcion, imagen, marca, categoria, countInStock } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -126,23 +128,27 @@ const updateProduct = async (req, res) => {
         product.precio = precio || product.precio;
         product.categoria = categoria || product.categoria;
         product.imagen = imagen || product.imagen;
-
-        // --- CORRECCIÓN IMPORTANTE PARA PRODUCTOS ANTIGUOS ---
-        // Si el producto viejo no tiene marca/descripción (porque era antiguo)
-        // le ponemos un valor por defecto para que la BD no rechace el guardado.
+        
+        // Relleno de datos antiguos (Marca y Descripción)
         product.marca = marca || product.marca || "Genérica";
         product.descripcion = descripcion || product.descripcion || "Descripción no disponible";
 
-        // --- CORRECCIÓN DEL STOCK ---
-        // Usamos ternario para permitir guardar el número 0
+        // Actualización de Stock
         product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
+
+        // --- CORRECCIÓN FINAL: ASIGNAR DUEÑO A HUÉRFANOS ---
+        // Si el producto no tiene usuario (user), le ponemos tu ID de Admin (req.user._id)
+        if (!product.user) {
+            product.user = req.user._id;
+        }
 
         try {
             const updatedProduct = await product.save();
             res.json(updatedProduct);
         } catch (error) {
-            console.error("Error al actualizar:", error.message);
-            res.status(400).json({ message: "Error: Faltan datos obligatorios. " + error.message });
+            console.error("Error al guardar:", error.message);
+            // Esto nos mostrará el error exacto en la alerta si falla algo más
+            res.status(400).json({ message: error.message });
         }
     } else {
         res.status(404);
