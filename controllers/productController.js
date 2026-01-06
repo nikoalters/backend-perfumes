@@ -34,36 +34,38 @@ const getProductById = async (req, res) => {
 
 // Crear reseña
 const createProductReview = async (req, res) => {
-  const { rating, comment } = req.body;
+    const { rating, comment } = req.body;
 
-  try {
-      const product = await Product.findById(req.params.id);
+    try {
+        const product = await Product.findById(req.params.id);
 
-      if (product) {
-        // Verificar si ya opinó (opcional)
-        const review = {
-          name: req.user.name,
-          rating: Number(rating),
-          comment,
-          user: req.user._id,
-        };
+        if (product) {
+            // Verificar si ya opinó (opcional, aquí permitimos varias)
+            const review = {
+                name: req.user.name,
+                rating: Number(rating),
+                comment,
+                user: req.user._id,
+            };
 
-        product.reviews.push(review);
-        product.numReviews = product.reviews.length;
-        product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+            product.reviews.push(review);
+            product.numReviews = product.reviews.length;
+            product.rating =
+                product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+                product.reviews.length;
 
-        await product.save();
-        res.status(201).json({ message: 'Reseña agregada' });
-      } else {
-        res.status(404).json({ message: 'Producto no encontrado' });
-      }
-  } catch (error) {
-      res.status(400).json({ message: 'Error al crear la reseña' });
-  }
+            await product.save();
+            res.status(201).json({ message: 'Reseña agregada' });
+        } else {
+            res.status(404).json({ message: 'Producto no encontrado' });
+        }
+    } catch (error) {
+        res.status(400).json({ message: 'Error al crear la reseña' });
+    }
 };
 
 // ============================================================
-// FUNCIONES DE ADMINISTRADOR (NUEVAS & ACTUALIZADAS)
+// FUNCIONES DE ADMINISTRADOR
 // ============================================================
 
 // @desc    Borrar un producto
@@ -97,8 +99,8 @@ const createProduct = async (req, res) => {
             precio,
             categoria,
             imagen,
-            // Agrego estos campos opcionales por si tu modelo los tiene
-            descripcion: descripcion || "Sin descripción",
+            // Valores por defecto seguros
+            descripcion: descripcion || "Perfume original garantizado.",
             marca: marca || "Genérica",
             countInStock: countInStock || 0
         });
@@ -106,7 +108,7 @@ const createProduct = async (req, res) => {
         const createdProduct = await product.save();
         res.status(201).json(createdProduct);
     } catch (error) {
-        res.status(400).json({ message: 'Datos de producto inválidos' });
+        res.status(400).json({ message: 'Datos de producto inválidos: ' + error.message });
     }
 };
 
@@ -114,6 +116,7 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
+    // 1. Recibimos los datos del frontend
     const { nombre, precio, descripcion, imagen, marca, categoria, countInStock } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -123,25 +126,35 @@ const updateProduct = async (req, res) => {
         product.precio = precio || product.precio;
         product.categoria = categoria || product.categoria;
         product.imagen = imagen || product.imagen;
-        
-        // Campos opcionales (si tu modelo los usa)
-        product.descripcion = descripcion || product.descripcion;
-        product.marca = marca || product.marca;
+
+        // --- CORRECCIÓN IMPORTANTE PARA PRODUCTOS ANTIGUOS ---
+        // Si el producto viejo no tiene marca/descripción (porque era antiguo)
+        // le ponemos un valor por defecto para que la BD no rechace el guardado.
+        product.marca = marca || product.marca || "Genérica";
+        product.descripcion = descripcion || product.descripcion || "Descripción no disponible";
+
+        // --- CORRECCIÓN DEL STOCK ---
+        // Usamos ternario para permitir guardar el número 0
         product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
 
-        const updatedProduct = await product.save();
-        res.json(updatedProduct);
+        try {
+            const updatedProduct = await product.save();
+            res.json(updatedProduct);
+        } catch (error) {
+            console.error("Error al actualizar:", error.message);
+            res.status(400).json({ message: "Error: Faltan datos obligatorios. " + error.message });
+        }
     } else {
         res.status(404);
         throw new Error('Producto no encontrado');
     }
 };
 
-// --- FUNCIÓN DE SEMILLA ---
+// --- FUNCIÓN DE SEMILLA (Carga masiva inicial) ---
 const seedProducts = async (req, res) => {
     try {
         await Product.deleteMany({});
-        const perfumes = []; // Aquí pegarás tus datos si los necesitas
+        const perfumes = []; // Aquí pegarás tus datos si los necesitas de nuevo
         const createdProducts = await Product.insertMany(perfumes);
         res.json({ message: "¡Carga exitosa!", count: createdProducts.length });
     } catch (error) {
@@ -153,12 +166,12 @@ const seedProducts = async (req, res) => {
 // ============================================================
 // EXPORTAR TODO
 // ============================================================
-export { 
-    getProducts, 
-    getProductById, 
-    createProductReview, 
+export {
+    getProducts,
+    getProductById,
+    createProductReview,
     createProduct,
-    deleteProduct, // <--- Nueva
-    updateProduct, // <--- Nueva
-    seedProducts 
+    deleteProduct,
+    updateProduct,
+    seedProducts
 };
