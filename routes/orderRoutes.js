@@ -1,14 +1,20 @@
 import express from 'express';
 const router = express.Router();
-import { addOrderItems, getOrderById } from '../controllers/orderController.js';
+import { 
+    addOrderItems, 
+    getOrderById, 
+    getMyOrders // <--- Importar nueva función
+} from '../controllers/orderController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
-// RUTA RAIZ: /api/orders
-// POST: Crear pedido (Protegido)
+// 1. Crear pedido
 router.route('/').post(protect, addOrderItems);
 
-// RUTA ID: /api/orders/:id
-// GET: Ver un pedido específico (Protegido)
+// 2. Obtener MIS pedidos (NUEVA RUTA)
+// ¡Esta debe ir antes de /:id!
+router.route('/myorders').get(protect, getMyOrders); 
+
+// 3. Obtener pedido por ID
 router.route('/:id').get(protect, getOrderById);
 
 export default router;

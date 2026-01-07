@@ -54,4 +54,16 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 });
 
-export { addOrderItems, getOrderById };
+// ... (código anterior) ...
+
+// @desc    Obtener pedidos del usuario logueado
+// @route   GET /api/orders/myorders
+// @access  Private
+const getMyOrders = asyncHandler(async (req, res) => {
+  // Busca pedidos donde el campo 'user' coincida con el ID del usuario logueado
+  const orders = await Order.find({ user: req.user._id });
+  res.json(orders);
+});
+
+// IMPORTANTE: Agrégalo al export
+export { addOrderItems, getOrderById, getMyOrders };
