@@ -1,7 +1,10 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
+import Product from '../models/productModel.js'; // <--- 1. IMPORTANTE: Importar Producto
 
-
+// @desc    Crear un nuevo pedido
+// @route   POST /api/orders
+// @access  Private
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
     orderItems,
@@ -32,7 +35,9 @@ const addOrderItems = asyncHandler(async (req, res) => {
   }
 });
 
-
+// @desc    Obtener pedido por ID
+// @route   GET /api/orders/:id
+// @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     'user',
@@ -47,19 +52,25 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Obtener mis pedidos
+// @route   GET /api/orders/myorders
+// @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
   res.json(orders);
 });
 
-
+// @desc    Obtener TODOS los pedidos (Admin)
+// @route   GET /api/orders
+// @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
-  // Traemos todos y mostramos el ID y Nombre del usuario
   const orders = await Order.find({}).populate('user', 'id name');
   res.json(orders);
 });
 
-
+// @desc    Marcar pedido como PAGADO y RESTAR STOCK 📉
+// @route   PUT /api/orders/:id/pay
+// @access  Private/Admin
 const updateOrderToPaid = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
@@ -67,6 +78,17 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     order.isPaid = true;
     order.paidAt = Date.now();
     
+    // --- 👇 AQUÍ ESTÁ LA MAGIA DEL STOCK 👇 ---
+    // Recorremos cada producto del pedido y restamos la cantidad comprada
+    for (const item of order.orderItems) {
+      const product = await Product.findById(item.product);
+      if (product) {
+        product.countInStock = product.countInStock - item.qty;
+        await product.save();
+      }
+    }
+    // ------------------------------------------
+
     const updatedOrder = await order.save();
     res.json(updatedOrder);
   } else {
@@ -75,10 +97,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
   }
 });
 
-
-// ... (código anterior) ...
-
-// @desc    Marcar pedido como ENVIADO (Delivered)
+// @desc    Marcar pedido como ENVIADO
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 const updateOrderToDelivered = asyncHandler(async (req, res) => {
@@ -95,9 +114,7 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   }
 });
 
-// ... (código anterior) ...
-
-// @desc    Marcar pedido como CANCELADO/RECHAZADO
+// @desc    Marcar pedido como CANCELADO
 // @route   PUT /api/orders/:id/cancel
 // @access  Private/Admin
 const updateOrderToCancelled = asyncHandler(async (req, res) => {
@@ -113,7 +130,6 @@ const updateOrderToCancelled = asyncHandler(async (req, res) => {
   }
 });
 
-// ¡AGRÉGALO AL EXPORT!
 export { 
     addOrderItems, 
     getOrderById, 
@@ -121,5 +137,5 @@ export {
     getOrders, 
     updateOrderToPaid, 
     updateOrderToDelivered,
-    updateOrderToCancelled // <--- NUEVO
+    updateOrderToCancelled
 };
