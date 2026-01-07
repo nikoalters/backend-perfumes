@@ -13,6 +13,9 @@ const authUser = async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            // --- CORRECCIÓN: DEVOLVER DIRECCIÓN AL LOGUEARSE ---
+            direccion: user.direccion, 
+            comuna: user.comuna,
             token: generateToken(user._id),
         });
     } else {
@@ -59,30 +62,62 @@ const getUserProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            // --- CORRECCIÓN: DEVOLVER DIRECCIÓN AL CONSULTAR PERFIL ---
+            direccion: user.direccion,
+            comuna: user.comuna,
         });
     } else {
         res.status(404).json({ message: 'Usuario no encontrado' });
     }
 };
 
-// 4. AGREGAR O QUITAR DE FAVORITOS
-const toggleWishlist = async (req, res) => {
-    const { productId } = req.body;
-    
-    // Buscamos al usuario actual
+// 4. ACTUALIZAR PERFIL (Y GUARDAR DIRECCIÓN)
+const updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
   
     if (user) {
-      // Verificamos si el perfume YA está en su lista
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      
+      // --- AQUÍ GUARDAMOS LA DIRECCIÓN ---
+      user.direccion = req.body.direccion || user.direccion;
+      user.comuna = req.body.comuna || user.comuna;
+  
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+  
+      const updatedUser = await user.save();
+  
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        direccion: updatedUser.direccion, // Devolvemos el dato actualizado
+        comuna: updatedUser.comuna,       // Devolvemos el dato actualizado
+        token: generateToken(updatedUser._id),
+      });
+    } else {
+      res.status(404);
+      throw new Error('Usuario no encontrado');
+    }
+};
+
+// 5. AGREGAR O QUITAR DE FAVORITOS
+const toggleWishlist = async (req, res) => {
+    const { productId } = req.body;
+    
+    const user = await User.findById(req.user._id);
+  
+    if (user) {
       const isAdded = user.wishlist.includes(productId);
   
       if (isAdded) {
-        // Si existe -> Lo sacamos (pull)
         user.wishlist.pull(productId);
         await user.save();
         res.json({ message: "Producto eliminado de favoritos", wishlist: user.wishlist });
       } else {
-        // Si NO existe -> Lo agregamos (push)
         user.wishlist.push(productId);
         await user.save();
         res.json({ message: "Producto agregado a favoritos", wishlist: user.wishlist });
@@ -92,40 +127,8 @@ const toggleWishlist = async (req, res) => {
     }
 };
 
-const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
-
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    
-    // --- AQUÍ GUARDAMOS LA DIRECCIÓN ---
-    user.direccion = req.body.direccion || user.direccion;
-    user.comuna = req.body.comuna || user.comuna;
-
-    if (req.body.password) {
-      user.password = req.body.password;
-    }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      isAdmin: updatedUser.isAdmin,
-      direccion: updatedUser.direccion, // Devolvemos el dato actualizado
-      comuna: updatedUser.comuna,       // Devolvemos el dato actualizado
-      token: generateToken(updatedUser._id),
-    });
-  } else {
-    res.status(404);
-    throw new Error('Usuario no encontrado');
-  }
-};
-// 5. OBTENER LA LISTA DE FAVORITOS
+// 6. OBTENER LA LISTA DE FAVORITOS
 const getWishlist = async (req, res) => {
-    // .populate('wishlist') rellena los datos del perfume automáticamente
     const user = await User.findById(req.user._id).populate('wishlist');
   
     if (user) {
@@ -135,11 +138,12 @@ const getWishlist = async (req, res) => {
     }
 };
 
-// IMPORTANTE: Exportar TODAS las funciones
+// IMPORTANTE: Exportar TODAS las funciones (incluida updateUserProfile que faltaba)
 export { 
     authUser, 
     registerUser, 
     getUserProfile,
-    toggleWishlist, // Nueva
-    getWishlist     // Nueva
+    updateUserProfile, // <--- FALTABA ESTA
+    toggleWishlist, 
+    getWishlist
 };
