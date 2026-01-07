@@ -6,7 +6,8 @@ import {
   getMyOrders,
   getOrders,
   updateOrderToPaid,
-  updateOrderToDelivered // <--- 1. IMPORTAR LA NUEVA FUNCIÓN
+  updateOrderToDelivered,
+  updateOrderToCancelled // <--- 1. IMPORTAR LA NUEVA FUNCIÓN DE CANCELAR
 } from '../controllers/orderController.js';
 
 // Importamos 'protect' y 'admin' desde tu archivo authMiddleware.js
@@ -28,7 +29,10 @@ router.route('/:id').get(protect, getOrderById);
 // 4. RUTA PAGAR (Admin aprueba el pago)
 router.route('/:id/pay').put(protect, admin, updateOrderToPaid);
 
-// 5. RUTA ENVIAR / ENTREGA (Admin marca como enviado) 👇 NUEVA
+// 5. RUTA ENVIAR (Admin marca como enviado)
 router.route('/:id/deliver').put(protect, admin, updateOrderToDelivered);
+
+// 6. RUTA CANCELAR / RECHAZAR (Admin marca como sin stock) 👇 NUEVA
+router.route('/:id/cancel').put(protect, admin, updateOrderToCancelled);
 
 export default router;

@@ -95,12 +95,31 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   }
 });
 
-// ¡AGRÉGALO AL EXPORT FINAL!
+// ... (código anterior) ...
+
+// @desc    Marcar pedido como CANCELADO/RECHAZADO
+// @route   PUT /api/orders/:id/cancel
+// @access  Private/Admin
+const updateOrderToCancelled = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (order) {
+    order.isCancelled = true;
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } else {
+    res.status(404);
+    throw new Error('Pedido no encontrado');
+  }
+});
+
+// ¡AGRÉGALO AL EXPORT!
 export { 
     addOrderItems, 
     getOrderById, 
     getMyOrders, 
     getOrders, 
     updateOrderToPaid, 
-    updateOrderToDelivered // <--- NUEVO
+    updateOrderToDelivered,
+    updateOrderToCancelled // <--- NUEVO
 };

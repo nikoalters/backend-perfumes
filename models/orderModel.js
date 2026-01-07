@@ -63,5 +63,21 @@ const orderSchema = mongoose.Schema(
 );
 
 const Order = mongoose.model('Order', orderSchema);
+// ... campos anteriores (isPaid, isDelivered, etc) ...
+    isDelivered: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+    // 👇 AGREGA ESTO AQUÍ AL FINAL
+    isCancelled: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+// ...
 
 export default Order;
