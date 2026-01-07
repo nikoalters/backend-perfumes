@@ -22,8 +22,8 @@ const orderSchema = mongoose.Schema({
   shippingAddress: {
     direccion: { type: String, required: true },
     city: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true },
+    postalCode: { type: String, default: '0000' }, 
+    country: { type: String, default: 'Chile' },
   },
   paymentMethod: {
     type: String,
