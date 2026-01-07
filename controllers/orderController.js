@@ -76,10 +76,31 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 });
 
 
+// ... (código anterior) ...
+
+// @desc    Marcar pedido como ENVIADO (Delivered)
+// @route   PUT /api/orders/:id/deliver
+// @access  Private/Admin
+const updateOrderToDelivered = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (order) {
+    order.isDelivered = true;
+    order.deliveredAt = Date.now();
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } else {
+    res.status(404);
+    throw new Error('Pedido no encontrado');
+  }
+});
+
+// ¡AGRÉGALO AL EXPORT FINAL!
 export { 
     addOrderItems, 
     getOrderById, 
     getMyOrders, 
-    getOrders,        
-    updateOrderToPaid 
+    getOrders, 
+    updateOrderToPaid, 
+    updateOrderToDelivered // <--- NUEVO
 };
