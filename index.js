@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors';
-
+import commentRoutes from './routes/commentRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
 app.use('/api/perfumes', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/comments', commentRoutes);
 
 const PORT = process.env.PORT || 10000; // Render usa el puerto 10000 por defecto
 app.listen(PORT, () => {
