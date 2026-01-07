@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get('/', (req, res) => {
 // Rutas
 app.use('/api/perfumes', productRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
 
 const PORT = process.env.PORT || 10000; // Render usa el puerto 10000 por defecto
 app.listen(PORT, () => {
