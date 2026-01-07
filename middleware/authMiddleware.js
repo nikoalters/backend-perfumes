@@ -1,9 +1,8 @@
 import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler'; // <--- Faltaba importar esto
-import User from '../models/User.js'; // ✅ Perfecto (con Mayúscula)
+import asyncHandler from 'express-async-handler'; // <--- Ahora sí funciona porque lo instalaste
+import User from '../models/User.js'; // ✅ Con la 'U' mayúscula correcta
 
-// 1. Middleware PROTECT (Para usuarios logueados)
-// Envolvemos la función en asyncHandler para manejar errores automáticamente
+// 1. Middleware PROTECT (Limpio y profesional)
 const protect = asyncHandler(async (req, res, next) => {
     let token;
 
@@ -12,15 +11,12 @@ const protect = asyncHandler(async (req, res, next) => {
         req.headers.authorization.startsWith('Bearer')
     ) {
         try {
-            // Obtener el token del encabezado
             token = req.headers.authorization.split(' ')[1];
-
-            // Decodificar el token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-            // Buscar al usuario en la BD (sin contraseña)
+            
+            // Buscamos el usuario
             req.user = await User.findById(decoded.id).select('-password');
-
+            
             next();
         } catch (error) {
             console.error(error);
@@ -35,7 +31,7 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 });
 
-// 2. Middleware ADMIN (Para administradores)
+// 2. Middleware ADMIN
 const admin = (req, res, next) => {
     if (req.user && req.user.isAdmin) {
         next();
@@ -45,5 +41,4 @@ const admin = (req, res, next) => {
     }
 };
 
-// Exportamos AMBOS
 export { protect, admin };
