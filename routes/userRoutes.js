@@ -4,8 +4,9 @@ import {
     authUser, 
     registerUser, 
     getUserProfile,
-    toggleWishlist, // <--- Nueva función importada
-    getWishlist     // <--- Nueva función importada
+    updateUserProfile, // <--- FALTABA ESTO
+    toggleWishlist, 
+    getWishlist     
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -15,12 +16,12 @@ router.post('/', registerUser);
 // RUTA 2: Login de Usuarios (POST /api/users/login)
 router.post('/login', authUser);
 
-// RUTA 3: Perfil del Usuario (GET /api/users/profile) - Protegida
-router.route('/profile').get(protect, getUserProfile);
+// RUTA 3: Perfil del Usuario (GET y PUT /api/users/profile) - Protegida
+router.route('/profile')
+    .get(protect, getUserProfile)
+    .put(protect, updateUserProfile); // <--- ESTA ES LA LLAVE QUE FALTABA 🔑
 
 // RUTA 4: Wishlist (POST y GET /api/users/wishlist) - Protegida
-// POST: Agrega o quita perfumes
-// GET: Obtiene la lista guardada
 router.route('/wishlist')
     .post(protect, toggleWishlist)
     .get(protect, getWishlist);
