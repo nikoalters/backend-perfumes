@@ -1,9 +1,7 @@
-import asyncHandler from 'express-async-handler'; // Ahora que ya lo tienes instalado, úsalo ;)
+import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 
-// @desc    Crear un nuevo pedido
-// @route   POST /api/orders
-// @access  Private (Solo usuarios registrados)
+
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
     orderItems,
@@ -18,28 +16,23 @@ const addOrderItems = asyncHandler(async (req, res) => {
     throw new Error('No hay artículos en el pedido');
     return;
   } else {
-    // Crear el objeto de pedido en memoria
     const order = new Order({
-      user: req.user._id, // Asociamos el pedido al usuario logueado
+      user: req.user._id,
       orderItems,
       shippingAddress,
       itemsPrice,
       shippingPrice,
       totalPrice,
-      isPaid: false, // Nace pendiente
+      isPaid: false,
       isDelivered: false
     });
 
-    // Guardar en la Base de Datos
     const createdOrder = await order.save();
-
     res.status(201).json(createdOrder);
   }
 });
 
-// @desc    Obtener pedido por ID (Para ver detalles después)
-// @route   GET /api/orders/:id
-// @access  Private
+
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     'user',
@@ -54,16 +47,39 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 });
 
-// ... (código anterior) ...
-
-// @desc    Obtener pedidos del usuario logueado
-// @route   GET /api/orders/myorders
-// @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
-  // Busca pedidos donde el campo 'user' coincida con el ID del usuario logueado
   const orders = await Order.find({ user: req.user._id });
   res.json(orders);
 });
 
-// IMPORTANTE: Agrégalo al export
-export { addOrderItems, getOrderById, getMyOrders };
+
+const getOrders = asyncHandler(async (req, res) => {
+  // Traemos todos y mostramos el ID y Nombre del usuario
+  const orders = await Order.find({}).populate('user', 'id name');
+  res.json(orders);
+});
+
+
+const updateOrderToPaid = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (order) {
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } else {
+    res.status(404);
+    throw new Error('Pedido no encontrado');
+  }
+});
+
+
+export { 
+    addOrderItems, 
+    getOrderById, 
+    getMyOrders, 
+    getOrders,        
+    updateOrderToPaid 
+};

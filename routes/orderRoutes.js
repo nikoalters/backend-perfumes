@@ -1,20 +1,30 @@
 import express from 'express';
 const router = express.Router();
-import { 
-    addOrderItems, 
-    getOrderById, 
-    getMyOrders // <--- Importar nueva función
+import {
+  addOrderItems,
+  getOrderById,
+  getMyOrders,
+  getOrders,          // <--- Importar
+  updateOrderToPaid   // <--- Importar
 } from '../controllers/orderController.js';
-import { protect } from '../middleware/authMiddleware.js';
 
-// 1. Crear pedido
-router.route('/').post(protect, addOrderItems);
+// Importamos 'protect' y 'admin' desde tu archivo authMiddleware.js
+import { protect, admin } from '../middleware/authMiddleware.js'; 
 
-// 2. Obtener MIS pedidos (NUEVA RUTA)
-// ¡Esta debe ir antes de /:id!
-router.route('/myorders').get(protect, getMyOrders); 
+// 1. RUTA RAIZ: /api/orders
+// POST: Cliente crea pedido
+// GET: Admin ve TODOS los pedidos (protect + admin)
+router.route('/')
+    .post(protect, addOrderItems)
+    .get(protect, admin, getOrders); 
 
-// 3. Obtener pedido por ID
+// 2. RUTA MIS PEDIDOS (Cliente ve sus compras)
+router.route('/myorders').get(protect, getMyOrders);
+
+// 3. RUTA ID (Ver detalle de un pedido)
 router.route('/:id').get(protect, getOrderById);
+
+// 4. RUTA PAGAR (Admin aprueba el pago)
+router.route('/:id/pay').put(protect, admin, updateOrderToPaid);
 
 export default router;
