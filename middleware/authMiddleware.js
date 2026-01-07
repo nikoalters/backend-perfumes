@@ -1,8 +1,10 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import asyncHandler from 'express-async-handler'; // <--- Faltaba importar esto
+import User from '../models/User.js'; // ✅ Perfecto (con Mayúscula)
 
 // 1. Middleware PROTECT (Para usuarios logueados)
-const protect = async (req, res, next) => {
+// Envolvemos la función en asyncHandler para manejar errores automáticamente
+const protect = asyncHandler(async (req, res, next) => {
     let token;
 
     if (
@@ -22,8 +24,7 @@ const protect = async (req, res, next) => {
             next();
         } catch (error) {
             console.error(error);
-            // Usamos res.status(401) y lanzamos error para que el manejador de errores lo capture
-            res.status(401); 
+            res.status(401);
             throw new Error('No autorizado, token fallido');
         }
     }
@@ -32,15 +33,15 @@ const protect = async (req, res, next) => {
         res.status(401);
         throw new Error('No autorizado, no hay token');
     }
-};
+});
 
-// 2. Middleware ADMIN (Para administradores) <--- ESTO ES LO NUEVO
+// 2. Middleware ADMIN (Para administradores)
 const admin = (req, res, next) => {
     if (req.user && req.user.isAdmin) {
-        next(); // Tiene credencial VIP, pase por favor.
+        next();
     } else {
         res.status(401);
-        throw new Error('No autorizado como administrador'); // Se queda afuera.
+        throw new Error('No autorizado como administrador');
     }
 };
 
