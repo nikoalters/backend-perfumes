@@ -65,10 +65,6 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-// ============================================================
-// LÓGICA DE WISHLIST (NUEVAS FUNCIONES)
-// ============================================================
-
 // 4. AGREGAR O QUITAR DE FAVORITOS
 const toggleWishlist = async (req, res) => {
     const { productId } = req.body;
@@ -95,7 +91,38 @@ const toggleWishlist = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
 };
-  
+
+const updateUserProfile = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    
+    // --- AQUÍ GUARDAMOS LA DIRECCIÓN ---
+    user.direccion = req.body.direccion || user.direccion;
+    user.comuna = req.body.comuna || user.comuna;
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      direccion: updatedUser.direccion, // Devolvemos el dato actualizado
+      comuna: updatedUser.comuna,       // Devolvemos el dato actualizado
+      token: generateToken(updatedUser._id),
+    });
+  } else {
+    res.status(404);
+    throw new Error('Usuario no encontrado');
+  }
+};
 // 5. OBTENER LA LISTA DE FAVORITOS
 const getWishlist = async (req, res) => {
     // .populate('wishlist') rellena los datos del perfume automáticamente

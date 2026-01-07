@@ -24,43 +24,46 @@ const userSchema = mongoose.Schema({
         default: false,
     },
 
-    // --- NUEVO: LISTA DE DESEOS ---
+    // --- NUEVO: DATOS DE ENVÍO (Para autocompletar pedidos) ---
+    direccion: { 
+        type: String, 
+        required: false, 
+        default: "" 
+    },
+    comuna: { 
+        type: String, 
+        required: false, 
+        default: "" 
+    },
+
+    // --- LISTA DE DESEOS ---
     wishlist: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product' // Relacionamos con el modelo de Productos
+            ref: 'Product' 
         }
     ]
 
 }, {
-    timestamps: true, // Crea automáticamente createdAt y updatedAt
+    timestamps: true, 
 });
 
 // ============================================================
 // MÉTODOS DEL MODELO
 // ============================================================
 
-// 1. Comparar contraseñas (Usado en el Login)
+// 1. Comparar contraseñas
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// 2. Encriptar contraseña antes de guardar (VERSIÓN CORREGIDA SIN 'next')
-// Al usar async/await, Mongoose moderno ya no necesita que llamemos a 'next()'.
-// Simplemente dejamos que la función termine o usamos return.
+// 2. Encriptar contraseña antes de guardar
 userSchema.pre('save', async function () { 
-    
-    // Si la contraseña NO se modificó (ej: solo estamos guardando un like),
-    // salimos de la función inmediatamente con un return simple.
     if (!this.isModified('password')) {
         return; 
     }
-
-    // Si la contraseña cambió, la encriptamos.
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    
-    // Fin de la función (Mongoose asume que todo salió bien)
 });
 
 const User = mongoose.model('User', userSchema);
