@@ -1,6 +1,9 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 import Product from '../models/Product.js';
+// 👇 1. IMPORTAMOS EL CARTERO Y EL DISEÑO
+import transporter from '../config/mailer.js';
+import { emailOrdenRecibida } from '../utils/emailTemplates.js';
 
 // @desc    Crear un nuevo pedido
 // @route   POST /api/orders
@@ -31,6 +34,34 @@ const addOrderItems = asyncHandler(async (req, res) => {
     });
 
     const createdOrder = await order.save();
+
+    // 👇 2. BLOQUE MÁGICO DE ENVÍO DE CORREO 👇
+    // (Esto ocurre en paralelo, si falla no detiene la compra)
+    try {
+        console.log("📨 Preparando correo para:", req.user.email);
+        
+        const htmlContent = emailOrdenRecibida(
+            req.user.name,       // Nombre del cliente
+            createdOrder._id,    // ID de la orden
+            totalPrice,          // Total a pagar
+            orderItems           // Lista de perfumes
+        );
+
+        await transporter.sendMail({
+            from: '"Perfumes Chile 💎" <' + process.env.EMAIL_USER + '>', // Remitente
+            to: req.user.email, // Destinatario
+            subject: `Orden #${createdOrder._id.toString().slice(-6).toUpperCase()} - Pendiente de Pago`,
+            html: htmlContent, // Nuestro diseño Dark Luxury
+        });
+        
+        console.log(`✅ CORREO ENVIADO A: ${req.user.email}`);
+
+    } catch (error) {
+        console.log("❌ ERROR AL ENVIAR CORREO: ", error);
+        // No hacemos throw error para que el cliente igual reciba su confirmación en pantalla
+    }
+    // 👆 FIN DEL BLOQUE DE CORREO 👆
+
     res.status(201).json(createdOrder);
   }
 });
@@ -78,8 +109,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     order.isPaid = true;
     order.paidAt = Date.now();
     
-    // --- 👇 AQUÍ ESTÁ LA MAGIA DEL STOCK 👇 ---
-    // Recorremos cada producto del pedido y restamos la cantidad comprada
+    // --- LÓGICA DE STOCK ---
     for (const item of order.orderItems) {
       const product = await Product.findById(item.product);
       if (product) {
@@ -87,7 +117,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
         await product.save();
       }
     }
-    // ------------------------------------------
+    // -----------------------
 
     const updatedOrder = await order.save();
     res.json(updatedOrder);
